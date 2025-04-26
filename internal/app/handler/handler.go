@@ -35,7 +35,10 @@ func NewHandler(serveDir string) {
 			serveDir: serveDir,
 		}
 
-		go handle(&handler)
+		// go handle(&handler)
+		_, _ = handle(&handler)
+
+		c.Close()
 	}
 }
 
@@ -176,8 +179,6 @@ func (h *Handler) NewFile(request []string) (int, error) {
 	fileContent := request[7]
 
 	log.Println(fileContent)
-
-	log.Println(strings.Join(request, ", "))
 
 	file, err := os.Create(h.serveDir + body)
 	if err != nil {
