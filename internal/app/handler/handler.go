@@ -186,14 +186,14 @@ func (h *Handler) NewFile(request []string) (int, error) {
 	if err != nil {
 		log.Println(err)
 	}
-	file.Sync()
-
-	defer file.Close()
 
 	status, err := h.conn.Write([]byte("HTTP/1.1 201 Created\r\n\r\n"))
 	if err != nil {
 		return status, err
 	}
+
+	file.Sync()
+	defer file.Close()
 
 	return status, err
 }
