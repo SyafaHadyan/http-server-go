@@ -55,38 +55,48 @@ func handle(handler *Handler) (int, error) {
 
 	path := strings.Split(request[0], " ")[1]
 
-	if path == "/" {
-		status, err = handler.Root(handler.conn)
-		if err != nil {
-			return status, err
+	switch strings.Split(request[0], " ")[0] {
+	case "GET":
+		if path == "/" {
+			status, err = handler.Root()
+			if err != nil {
+				return status, err
+			}
+		} else if strings.HasPrefix(path, "/echo") {
+			status, err = handler.Echo(request)
+			if err != nil {
+				return status, err
+			}
+		} else if strings.HasPrefix(path, "/user-agent") {
+			status, err = handler.UserAgent(request)
+			if err != nil {
+				return status, err
+			}
+		} else if strings.HasPrefix(path, "/files") {
+			status, err = handler.Files(request)
+			if err != nil {
+				return status, err
+			}
+		} else {
+			status, err := handler.conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+			if err != nil {
+				return status, err
+			}
 		}
-	} else if strings.HasPrefix(path, "/echo") {
-		status, err = handler.Echo(request)
-		if err != nil {
-			return status, err
-		}
-	} else if strings.HasPrefix(path, "/user-agent") {
-		status, err = handler.UserAgent(request)
-		if err != nil {
-			return status, err
-		}
-	} else if strings.HasPrefix(path, "/files") {
-		status, err = handler.Files(request)
-		if err != nil {
-			return status, err
-		}
-	} else {
-		status, err := handler.conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
-		if err != nil {
-			return status, err
+	case "POST":
+		if strings.HasPrefix(path, "/files") {
+			status, err = handler.NewFile(request)
+			if err != nil {
+				return status, err
+			}
 		}
 	}
 
 	return status, err
 }
 
-func (h *Handler) Root(c net.Conn) (int, error) {
-	status, err := c.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+func (h *Handler) Root() (int, error) {
+	status, err := h.conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 	if err != nil {
 		return status, err
 	}
@@ -152,6 +162,37 @@ func (h *Handler) Files(request []string) (int, error) {
 	)
 
 	status, err := h.conn.Write([]byte(files))
+	if err != nil {
+		return status, err
+	}
+
+	return status, err
+}
+
+func (h *Handler) NewFile(request []string) (int, error) {
+	body := strings.Split(request[0], " ")[1]
+	body = strings.ReplaceAll(body, "/files/", "")
+
+	fileContent := request[7]
+
+	log.Println(fileContent)
+
+	log.Println(strings.Join(request, ", "))
+
+	file, err := os.Create(h.serveDir + body)
+	if err != nil {
+		log.Println(err)
+	}
+
+	_, err = file.Write([]byte(fileContent))
+	if err != nil {
+		log.Println(err)
+	}
+	file.Sync()
+
+	defer file.Close()
+
+	status, err := h.conn.Write([]byte("HTTP/1.1 201 Created\r\n\r\n"))
 	if err != nil {
 		return status, err
 	}
