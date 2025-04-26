@@ -192,8 +192,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		return status, err
 	}
 
-	file.Sync()
-	defer file.Close()
+	file.Close()
 
 	return status, err
 }
