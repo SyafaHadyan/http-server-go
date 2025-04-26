@@ -10,10 +10,12 @@ import (
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
-	err := bootstrap.Start()
+	status, err := bootstrap.Start()
 	if err != nil {
 		log.Println(err)
 	}
+
+	log.Println(status, err)
 
 	// l, err := net.Listen("tcp", "0.0.0.0:4221")
 	// if err != nil {

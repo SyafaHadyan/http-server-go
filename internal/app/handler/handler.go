@@ -8,7 +8,7 @@ import (
 
 type Handler struct{}
 
-func NewHandler() error {
+func NewHandler() (int, error) {
 	handler := Handler{}
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
@@ -23,16 +23,19 @@ func NewHandler() error {
 		os.Exit(1)
 	}
 
-	err = handler.Root(c)
+	status, err := handler.Root(c)
 	if err != nil {
-		return err
+		return status, err
 	}
 
-	return nil
+	return status, err
 }
 
-func (h *Handler) Root(c net.Conn) error {
-	c.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+func (h *Handler) Root(c net.Conn) (int, error) {
+	status, err := c.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	if err != nil {
+		return status, err
+	}
 
-	return nil
+	return status, err
 }
