@@ -2,15 +2,15 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
+	"strings"
 )
 
 type Handler struct{}
 
-func NewHandler() (int, error) {
-	handler := Handler{}
-
+func handle(handler *Handler) (int, error) {
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221")
@@ -23,12 +23,39 @@ func NewHandler() (int, error) {
 		os.Exit(1)
 	}
 
-	status, err := handler.Root(c)
+	remote := c.RemoteAddr()
+
+	bytes := make([]byte, 1024)
+	status, err := c.Read(bytes)
 	if err != nil {
+		log.Println(remote)
 		return status, err
 	}
 
+	request := strings.Split(string(bytes), "\r\n")
+	requestLine := strings.Split(request[0], " ")
+
+	path := requestLine[1]
+
+	if path == "/" {
+		status, err = handler.Root(c)
+		if err != nil {
+			return status, err
+		}
+	} else {
+		status, err := c.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		if err != nil {
+			return status, err
+		}
+	}
+
 	return status, err
+}
+
+func NewHandler() (int, error) {
+	handler := Handler{}
+
+	return handle(&handler)
 }
 
 func (h *Handler) Root(c net.Conn) (int, error) {
