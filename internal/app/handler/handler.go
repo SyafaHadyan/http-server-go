@@ -12,9 +12,10 @@ import (
 type Handler struct {
 	listener net.Listener
 	conn     net.Conn
+	serveDir string
 }
 
-func NewHandler() {
+func NewHandler(serveDir string) {
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221")
@@ -31,6 +32,7 @@ func NewHandler() {
 		handler := Handler{
 			listener: l,
 			conn:     c,
+			serveDir: serveDir,
 		}
 
 		go handle(&handler)
@@ -59,12 +61,17 @@ func handle(handler *Handler) (int, error) {
 			return status, err
 		}
 	} else if strings.HasPrefix(path, "/echo") {
-		status, err = handler.Echo(handler.conn, request)
+		status, err = handler.Echo(request)
 		if err != nil {
 			return status, err
 		}
 	} else if strings.HasPrefix(path, "/user-agent") {
-		status, err = handler.UserAgent(handler.conn, request)
+		status, err = handler.UserAgent(request)
+		if err != nil {
+			return status, err
+		}
+	} else if strings.HasPrefix(path, "/files") {
+		status, err = handler.Files(request)
 		if err != nil {
 			return status, err
 		}
@@ -87,16 +94,17 @@ func (h *Handler) Root(c net.Conn) (int, error) {
 	return status, err
 }
 
-func (h *Handler) Echo(c net.Conn, request []string) (int, error) {
+func (h *Handler) Echo(request []string) (int, error) {
 	body := strings.Split(request[0], " ")[1]
 	body = strings.ReplaceAll(body, "/echo/", "")
 
 	echo := fmt.Sprintf(
 		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
 		utf8.RuneCountInString(body),
-		body)
+		body,
+	)
 
-	status, err := c.Write([]byte(echo))
+	status, err := h.conn.Write([]byte(echo))
 	if err != nil {
 		return status, err
 	}
@@ -104,15 +112,46 @@ func (h *Handler) Echo(c net.Conn, request []string) (int, error) {
 	return status, err
 }
 
-func (h *Handler) UserAgent(c net.Conn, request []string) (int, error) {
+func (h *Handler) UserAgent(request []string) (int, error) {
 	body := strings.ReplaceAll(request[2], "User-Agent: ", "")
 
 	userAgent := fmt.Sprintf(
 		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
 		utf8.RuneCountInString(body),
-		body)
+		body,
+	)
 
-	status, err := c.Write([]byte(userAgent))
+	status, err := h.conn.Write([]byte(userAgent))
+	if err != nil {
+		return status, err
+	}
+
+	return status, err
+}
+
+func (h *Handler) Files(request []string) (int, error) {
+	body := strings.Split(request[0], " ")[1]
+	body = strings.ReplaceAll(body, "/files/", "")
+
+	fileContent, err := os.ReadFile(h.serveDir + body)
+	if err != nil {
+		log.Println(err)
+
+		status, err := h.conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		if err != nil {
+			log.Println(err)
+		}
+
+		return status, err
+	}
+
+	files := fmt.Sprintf(
+		"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s",
+		len(fileContent),
+		string(fileContent[:]),
+	)
+
+	status, err := h.conn.Write([]byte(files))
 	if err != nil {
 		return status, err
 	}
