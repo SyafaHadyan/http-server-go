@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net"
@@ -195,7 +196,9 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	err = os.WriteFile(filepath.Join(h.serveDir, fileName), []byte(fileContent), 0666)
+	fileContentByte := bytes.Trim([]byte(fileContent), "\x00")
+
+	err = os.WriteFile(filepath.Join(h.serveDir, fileName), fileContentByte, 0666)
 	if err != nil {
 		log.Println(err)
 	}
