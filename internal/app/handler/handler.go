@@ -101,6 +101,8 @@ func (h *Handler) Root() (int, error) {
 		return status, err
 	}
 
+	h.conn.Close()
+
 	return status, err
 }
 
@@ -119,6 +121,8 @@ func (h *Handler) Echo(request []string) (int, error) {
 		return status, err
 	}
 
+	h.conn.Close()
+
 	return status, err
 }
 
@@ -135,6 +139,8 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	if err != nil {
 		return status, err
 	}
+
+	h.conn.Close()
 
 	return status, err
 }
@@ -166,6 +172,8 @@ func (h *Handler) Files(request []string) (int, error) {
 		return status, err
 	}
 
+	h.conn.Close()
+
 	return status, err
 }
 
@@ -192,7 +200,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		return status, err
 	}
 
-	// file.Close()
+	h.conn.Close()
 
 	return status, err
 }
