@@ -192,7 +192,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		return status, err
 	}
 
-	file.Close()
+	// file.Close()
 
 	return status, err
 }
