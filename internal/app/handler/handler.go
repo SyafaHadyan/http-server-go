@@ -1,23 +1,38 @@
 package handler
 
 import (
-	"net/http"
-
-	"github.com/gofiber/fiber/v2"
+	"fmt"
+	"net"
+	"os"
 )
 
 type Handler struct{}
 
-func NewHandler(routerGroup fiber.Router) {
+func NewHandler() error {
 	handler := Handler{}
 
-	routerGroup = routerGroup.Group("/")
+	l, err := net.Listen("tcp", "0.0.0.0:4221")
+	if err != nil {
+		fmt.Println("Failed to bind to port 4221")
+		os.Exit(1)
+	}
 
-	routerGroup.Get("/", handler.Root)
+	c, err := l.Accept()
+	if err != nil {
+		fmt.Println("Error accepting connection: ", err.Error())
+		os.Exit(1)
+	}
+
+	err = handler.Root(c)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (h *Handler) Root(ctx *fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{
-		"message": "success",
-	})
+func (h *Handler) Root(c net.Conn) error {
+	c.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+
+	return nil
 }

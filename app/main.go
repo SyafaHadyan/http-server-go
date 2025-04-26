@@ -3,15 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
-	"os"
 
 	"github.com/SyafaHadyan/http-server-go/internal/app/bootstrap"
-)
-
-var (
-	_ = net.Listen
-	_ = os.Exit
 )
 
 func main() {
