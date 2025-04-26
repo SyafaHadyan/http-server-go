@@ -34,8 +34,6 @@ func NewHandler() {
 		}
 
 		go handle(&handler)
-
-		c.Close()
 	}
 }
 
