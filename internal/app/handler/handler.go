@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"unicode/utf8"
 )
 
 type Handler struct{}
@@ -73,11 +74,9 @@ func (h *Handler) Root(c net.Conn) (int, error) {
 }
 
 func (h *Handler) Echo(c net.Conn, requestLine []string) (int, error) {
-	const FORMAT = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\n"
-
 	body := strings.ReplaceAll(requestLine[1], "/echo/", "")
-
-	echo := fmt.Sprintf(FORMAT+"%s", body)
+	format := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n", utf8.RuneCountInString(body))
+	echo := fmt.Sprintf(format+"%s", body)
 
 	status, err := c.Write([]byte(echo))
 	if err != nil {
