@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode/utf8"
 )
@@ -194,7 +195,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	_, err = file.Write([]byte(fileContent))
+	err = os.WriteFile(filepath.Join(h.serveDir, fileName), []byte(fileContent), 0666)
 	if err != nil {
 		log.Println(err)
 	}
