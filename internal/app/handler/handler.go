@@ -35,10 +35,7 @@ func NewHandler(serveDir string) {
 			serveDir: serveDir,
 		}
 
-		// go handle(&handler)
-		_, _ = handle(&handler)
-
-		c.Close()
+		go handle(&handler)
 	}
 }
 
