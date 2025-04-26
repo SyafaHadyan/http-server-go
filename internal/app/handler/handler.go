@@ -42,6 +42,11 @@ func handle(handler *Handler) (int, error) {
 		if err != nil {
 			return status, err
 		}
+	} else if strings.HasPrefix(path, "/echo") {
+		status, err = handler.Echo(c, requestLine)
+		if err != nil {
+			return status, err
+		}
 	} else {
 		status, err := c.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 		if err != nil {
@@ -60,6 +65,21 @@ func NewHandler() (int, error) {
 
 func (h *Handler) Root(c net.Conn) (int, error) {
 	status, err := c.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	if err != nil {
+		return status, err
+	}
+
+	return status, err
+}
+
+func (h *Handler) Echo(c net.Conn, requestLine []string) (int, error) {
+	const FORMAT = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\n"
+
+	body := strings.ReplaceAll(requestLine[1], "/echo/", "")
+
+	echo := fmt.Sprintf(FORMAT+"%s", body)
+
+	status, err := c.Write([]byte(echo))
 	if err != nil {
 		return status, err
 	}
