@@ -33,7 +33,7 @@ func NewHandler() {
 			conn:     c,
 		}
 
-		_, _ = handle(&handler)
+		go handle(&handler)
 
 		c.Close()
 	}
