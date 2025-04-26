@@ -1,12 +1,10 @@
 package handler
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	"path"
 	"strings"
 	"unicode/utf8"
 )
@@ -185,20 +183,20 @@ func (h *Handler) NewFile(request []string) (int, error) {
 
 	fileContent := request[7]
 
-	// file, err := os.Create(h.serveDir + body)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
+	file, err := os.Create(h.serveDir + body)
+	if err != nil {
+		log.Println(err)
+	}
 
-	// _, err = file.Write([]byte(fileContent))
-	// if err != nil {
-	// 	log.Println(err)
-	// }
+	_, err = file.Write([]byte(fileContent))
+	if err != nil {
+		log.Println(err)
+	}
 
-	reader := bufio.NewReader(h.conn)
-	buffer := make([]byte, len(fileContent))
-	reader.Read(buffer)
-	os.WriteFile(path.Join(h.serveDir, body), buffer, 0644)
+	// reader := bufio.NewReader(h.conn)
+	// buffer := make([]byte, len(fileContent))
+	// reader.Read(buffer)
+	// os.WriteFile(path.Join(h.serveDir, body), buffer, 0644)
 
 	status, err := h.conn.Write([]byte("HTTP/1.1 201 Created\r\n\r\n"))
 	if err != nil {
