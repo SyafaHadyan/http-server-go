@@ -178,12 +178,22 @@ func (h *Handler) Files(request []string) (int, error) {
 }
 
 func (h *Handler) NewFile(request []string) (int, error) {
-	body := strings.Split(request[0], " ")[1]
-	body = strings.ReplaceAll(body, "/files/", "")
+	// body := strings.Split(request[0], " ")[1]
+	// body = strings.ReplaceAll(body, "/files/", "")
 
-	fileContent := request[7]
+	// fileContent := request[7]
 
-	file, err := os.Create(h.serveDir + body)
+	path := strings.Split(request[0], " ")[1]
+	fileName := strings.TrimPrefix(path, "/files/")
+
+	var fileContent string
+	for i, line := range request {
+		if line == "" && i+1 < len(request) {
+			fileContent = request[i+1]
+			break
+		}
+	}
+	file, err := os.Create(h.serveDir + fileName)
 	if err != nil {
 		log.Println(err)
 	}
@@ -200,7 +210,6 @@ func (h *Handler) NewFile(request []string) (int, error) {
 
 	file.Sync()
 	file.Close()
-
 	h.conn.Close()
 
 	return status, err
