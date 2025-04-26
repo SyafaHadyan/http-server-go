@@ -198,6 +198,8 @@ func (h *Handler) NewFile(request []string) (int, error) {
 	// reader.Read(buffer)
 	// os.WriteFile(path.Join(h.serveDir, body), buffer, 0644)
 
+	h.conn.Write([]byte("HTTP/1.1 201 Created\r\n\r\n"))
+
 	status, err := h.conn.Write([]byte("HTTP/1.1 201 Created\r\n\r\n"))
 	if err != nil {
 		return status, err
