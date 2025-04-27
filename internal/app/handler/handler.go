@@ -7,14 +7,30 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode/utf8"
+)
+
+var (
+	supportedEncoding []string
+	httpStatus        map[string]string
 )
 
 type Handler struct {
 	listener net.Listener
 	conn     net.Conn
 	serveDir string
+}
+
+func init() {
+	supportedEncoding = make([]string, 1)
+	supportedEncoding[0] = "gzip"
+
+	httpStatus = make(map[string]string)
+	httpStatus["ok"] = "HTTP/1.1 200 OK\r\n"
+	httpStatus["not found"] = "HTTP/1.1 404 Not Found\r\n"
+	httpStatus["created"] = "HTTP/1.1 201 Created\r\n"
 }
 
 func NewHandler(serveDir string) {
@@ -41,14 +57,26 @@ func NewHandler(serveDir string) {
 	}
 }
 
-func handle(handler *Handler) (int, error) {
+func getEncoding(request []string) string {
+	encoding := strings.ReplaceAll(request[4], "Accept-Encoding: ", "")
+
+	if slices.Contains(supportedEncoding, encoding) {
+		return fmt.Sprintf(
+			"Conent-Encoding: %s\r\n",
+			encoding,
+		)
+	}
+
+	return ""
+}
+
+func handle(handler *Handler) {
 	remote := handler.conn.RemoteAddr()
 
 	bytes := make([]byte, 1024)
-	status, err := handler.conn.Read(bytes)
+	_, err := handler.conn.Read(bytes)
 	if err != nil {
 		log.Println(remote)
-		return status, err
 	}
 
 	request := strings.Split(string(bytes), "\r\n")
@@ -60,50 +88,53 @@ func handle(handler *Handler) (int, error) {
 	switch strings.Split(request[0], " ")[0] {
 	case "GET":
 		if path == "/" {
-			status, err = handler.Root()
+			_, err = handler.Root(request)
 			if err != nil {
-				return status, err
+				log.Println(err)
 			}
 		} else if strings.HasPrefix(path, "/echo") {
-			status, err = handler.Echo(request)
+			_, err = handler.Echo(request)
 			if err != nil {
-				return status, err
+				log.Println(err)
 			}
 		} else if strings.HasPrefix(path, "/user-agent") {
-			status, err = handler.UserAgent(request)
+			_, err = handler.UserAgent(request)
 			if err != nil {
-				return status, err
+				log.Println(err)
 			}
 		} else if strings.HasPrefix(path, "/files") {
-			status, err = handler.Files(request)
+			_, err = handler.Files(request)
 			if err != nil {
-				return status, err
+				log.Println(err)
 			}
 		} else {
-			status, err := handler.conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+			_, err := handler.conn.Write([]byte(httpStatus["not found"] + "\r\n"))
 			if err != nil {
-				return status, err
+				log.Println(err)
 			}
 		}
 	case "POST":
 		if strings.HasPrefix(path, "/files") {
-			status, err = handler.NewFile(request)
+			_, err = handler.NewFile(request)
 			if err != nil {
-				return status, err
+				log.Println(err)
 			}
 		}
 	}
-
-	return status, err
 }
 
-func (h *Handler) Root() (int, error) {
-	status, err := h.conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+func (h *Handler) Root(request []string) (int, error) {
+	encoding := getEncoding(request)
+
+	status, err := h.conn.Write([]byte(httpStatus["ok"] + encoding + "\r\n"))
 	if err != nil {
 		return status, err
 	}
 
-	h.conn.Close()
+	err = h.conn.Close()
+	if err != nil {
+		log.Println(err)
+	}
 
 	return status, err
 }
@@ -112,8 +143,12 @@ func (h *Handler) Echo(request []string) (int, error) {
 	body := strings.Split(request[0], " ")[1]
 	body = strings.ReplaceAll(body, "/echo/", "")
 
+	encoding := getEncoding(request)
+
 	echo := fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+		httpStatus["ok"],
+		encoding,
 		utf8.RuneCountInString(body),
 		body,
 	)
@@ -123,7 +158,10 @@ func (h *Handler) Echo(request []string) (int, error) {
 		return status, err
 	}
 
-	h.conn.Close()
+	err = h.conn.Close()
+	if err != nil {
+		log.Println(err)
+	}
 
 	return status, err
 }
@@ -131,8 +169,12 @@ func (h *Handler) Echo(request []string) (int, error) {
 func (h *Handler) UserAgent(request []string) (int, error) {
 	body := strings.ReplaceAll(request[2], "User-Agent: ", "")
 
+	encoding := getEncoding(request)
+
 	userAgent := fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+		httpStatus["ok"],
+		encoding,
 		utf8.RuneCountInString(body),
 		body,
 	)
@@ -142,7 +184,10 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 		return status, err
 	}
 
-	h.conn.Close()
+	err = h.conn.Close()
+	if err != nil {
+		log.Println(err)
+	}
 
 	return status, err
 }
@@ -151,11 +196,13 @@ func (h *Handler) Files(request []string) (int, error) {
 	body := strings.Split(request[0], " ")[1]
 	body = strings.ReplaceAll(body, "/files/", "")
 
+	encoding := getEncoding(request)
+
 	fileContent, err := os.ReadFile(h.serveDir + body)
 	if err != nil {
 		log.Println(err)
 
-		status, err := h.conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		status, err := h.conn.Write([]byte(httpStatus["not found"] + encoding + "\r\n"))
 		if err != nil {
 			log.Println(err)
 		}
@@ -164,7 +211,9 @@ func (h *Handler) Files(request []string) (int, error) {
 	}
 
 	files := fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s",
+		"%s%sContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s",
+		httpStatus["ok"],
+		encoding,
 		len(fileContent),
 		string(fileContent[:]),
 	)
@@ -174,7 +223,10 @@ func (h *Handler) Files(request []string) (int, error) {
 		return status, err
 	}
 
-	h.conn.Close()
+	err = h.conn.Close()
+	if err != nil {
+		log.Println(err)
+	}
 
 	return status, err
 }
@@ -191,6 +243,8 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		}
 	}
 
+	encoding := getEncoding(request)
+
 	file, err := os.Create(h.serveDir + fileName)
 	if err != nil {
 		log.Println(err)
@@ -203,14 +257,25 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	status, err := h.conn.Write([]byte("HTTP/1.1 201 Created\r\n\r\n"))
+	status, err := h.conn.Write([]byte(httpStatus["created"] + encoding + "\r\n"))
 	if err != nil {
 		return status, err
 	}
 
-	file.Sync()
-	file.Close()
-	h.conn.Close()
+	err = file.Sync()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = file.Close()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = h.conn.Close()
+	if err != nil {
+		log.Println(err)
+	}
 
 	return status, err
 }
