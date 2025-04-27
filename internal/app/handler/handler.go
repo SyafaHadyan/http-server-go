@@ -62,9 +62,11 @@ func getEncoding(request []string) string {
 		current := request[i]
 
 		if strings.HasPrefix(current, "Accept-Encoding: ") {
-			current := strings.ReplaceAll(current, "Accept-Encoding: ", "")
-			if slices.Contains(supportedEncoding, current) {
-				return "Content-Encoding: gzip"
+			current := strings.Split(strings.ReplaceAll(current, "Accept-Encoding: ", ""), ", ")
+			for j := range current {
+				if slices.Contains(supportedEncoding, current[j]) {
+					return "Content-Encoding: " + current[j]
+				}
 			}
 		}
 	}
@@ -148,8 +150,9 @@ func (h *Handler) Echo(request []string) (int, error) {
 	encoding := getEncoding(request)
 
 	var echo string
+
 	// var responseBody bytes.Buffer
-	var contentLength int
+	// var contentLength int
 
 	// if strings.Contains(encoding, "gzip") {
 	// 	gz := gzip.NewWriter(&responseBody)
@@ -169,7 +172,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	// 	contentLength = utf8.RuneCountInString(body)
 	// }
 
-	contentLength = utf8.RuneCountInString(body)
+	contentLength := utf8.RuneCountInString(body)
 
 	if strings.Contains(encoding, "gzip") {
 		echo = fmt.Sprintf(
@@ -180,7 +183,6 @@ func (h *Handler) Echo(request []string) (int, error) {
 			body,
 		)
 	} else {
-		log.Println("else")
 		echo = fmt.Sprintf(
 			"%sContent-Type: text/plain\r\n%sContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
