@@ -34,6 +34,23 @@ func init() {
 	httpStatus["created"] = "HTTP/1.1 201 Created\r\n"
 }
 
+func getEncoding(request []string) string {
+	for i := range request {
+		current := request[i]
+
+		if strings.HasPrefix(current, "Accept-Encoding: ") {
+			current := strings.Split(strings.ReplaceAll(current, "Accept-Encoding: ", ""), ", ")
+			for j := range current {
+				if slices.Contains(supportedEncoding, current[j]) {
+					return "Content-Encoding: " + current[j]
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
 func NewHandler(serveDir string) {
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
@@ -58,69 +75,64 @@ func NewHandler(serveDir string) {
 	}
 }
 
-func getEncoding(request []string) string {
-	for i := range request {
-		current := request[i]
-
-		if strings.HasPrefix(current, "Accept-Encoding: ") {
-			current := strings.Split(strings.ReplaceAll(current, "Accept-Encoding: ", ""), ", ")
-			for j := range current {
-				if slices.Contains(supportedEncoding, current[j]) {
-					return "Content-Encoding: " + current[j]
-				}
-			}
-		}
-	}
-
-	return ""
-}
-
 func handle(handler *Handler) {
 	remote := handler.conn.RemoteAddr()
 
-	bytes := make([]byte, 1024)
-	_, err := handler.conn.Read(bytes)
-	if err != nil {
-		log.Println(remote)
+	for {
+		bytes := make([]byte, 1024)
+		_, err := handler.conn.Read(bytes)
+		if err != nil {
+			log.Println(remote)
+		}
+
+		request := strings.Split(string(bytes), "\r\n")
+
+		if len(request) == 1 {
+			break
+		}
+
+		log.Println(strings.Join(request, ", "))
+		handler.HandleRequest(request)
 	}
+}
 
-	request := strings.Split(string(bytes), "\r\n")
+func (h *Handler) ReadRequest() {
+}
 
-	log.Println(strings.Join(request, ", "))
-
+func (h *Handler) HandleRequest(request []string) {
 	path := strings.Split(request[0], " ")[1]
 
 	switch strings.Split(request[0], " ")[0] {
 	case "GET":
 		if path == "/" {
-			_, err = handler.Root(request)
+			_, err := h.Root(request)
 			if err != nil {
 				log.Println(err)
 			}
 		} else if strings.HasPrefix(path, "/echo") {
-			_, err = handler.Echo(request)
+			_, err := h.Echo(request)
 			if err != nil {
 				log.Println(err)
 			}
 		} else if strings.HasPrefix(path, "/user-agent") {
-			_, err = handler.UserAgent(request)
+			_, err := h.UserAgent(request)
 			if err != nil {
 				log.Println(err)
 			}
 		} else if strings.HasPrefix(path, "/files") {
-			_, err = handler.Files(request)
+			_, err := h.Files(request)
 			if err != nil {
 				log.Println(err)
 			}
 		} else {
-			_, err := handler.conn.Write([]byte(httpStatus["not found"] + "\r\n"))
+			_, err := h.conn.Write([]byte(httpStatus["not found"] + "\r\n"))
 			if err != nil {
 				log.Println(err)
 			}
 		}
 	case "POST":
 		if strings.HasPrefix(path, "/files") {
-			_, err = handler.NewFile(request)
+			_, err := h.NewFile(request)
 			if err != nil {
 				log.Println(err)
 			}
@@ -204,7 +216,13 @@ func (h *Handler) Echo(request []string) (int, error) {
 }
 
 func (h *Handler) UserAgent(request []string) (int, error) {
-	body := strings.ReplaceAll(request[2], "User-Agent: ", "")
+	var body string
+
+	for i := range request {
+		if strings.Contains(request[i], "User-Agent: ") {
+			body = strings.ReplaceAll(request[i], "User-Agent: ", "")
+		}
+	}
 
 	encoding := getEncoding(request)
 
