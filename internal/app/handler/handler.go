@@ -171,13 +171,24 @@ func (h *Handler) Echo(request []string) (int, error) {
 
 	contentLength = utf8.RuneCountInString(body)
 
-	echo = fmt.Sprintf(
-		"%sContent-Type: text/plain\r\n%s\r\nContent-Length: %d\r\n\r\n%s",
-		httpStatus["ok"],
-		encoding,
-		contentLength,
-		body,
-	)
+	if strings.Contains(encoding, "gzip") {
+		echo = fmt.Sprintf(
+			"%sContent-Type: text/plain\r\n%s\r\nContent-Length: %d\r\n\r\n%s",
+			httpStatus["ok"],
+			encoding,
+			contentLength,
+			body,
+		)
+	} else {
+		log.Println("else")
+		echo = fmt.Sprintf(
+			"%sContent-Type: text/plain\r\n%sContent-Length: %d\r\n\r\n%s",
+			httpStatus["ok"],
+			encoding,
+			contentLength,
+			body,
+		)
+	}
 
 	status, err := h.conn.Write([]byte(echo))
 	if err != nil {
