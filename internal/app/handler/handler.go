@@ -146,7 +146,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	encoding := getEncoding(request)
 
 	var echo string
-	var responseBody bytes.Buffer
+	// var responseBody bytes.Buffer
 	var contentLength int
 
 	// if strings.Contains(encoding, "gzip") {
@@ -169,8 +169,6 @@ func (h *Handler) Echo(request []string) (int, error) {
 
 	contentLength = utf8.RuneCountInString(body)
 
-	log.Println(contentLength)
-
 	if strings.Contains(encoding, "gzip") {
 		log.Println(encoding)
 		echo = fmt.Sprintf(
@@ -179,14 +177,14 @@ func (h *Handler) Echo(request []string) (int, error) {
 			// "Content-Encoding: gzip",
 			encoding,
 			contentLength,
-			responseBody.String(),
+			body,
 		)
 	} else {
 		echo = fmt.Sprintf(
 			"%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
 			contentLength,
-			responseBody.String(),
+			body,
 		)
 	}
 
