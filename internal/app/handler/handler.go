@@ -92,6 +92,8 @@ func handle(handler *Handler) {
 	log.Println(strings.Join(request, ", "))
 
 	handler.HandleRequest(request)
+
+	handler.conn.Close()
 }
 
 func (h *Handler) ReadRequest() {
