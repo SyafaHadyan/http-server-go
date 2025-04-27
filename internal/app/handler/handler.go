@@ -169,6 +169,8 @@ func (h *Handler) Echo(request []string) (int, error) {
 
 	contentLength = utf8.RuneCountInString(body)
 
+	log.Println(contentLength)
+
 	if strings.Contains(encoding, "gzip") {
 		log.Println(encoding)
 		echo = fmt.Sprintf(
