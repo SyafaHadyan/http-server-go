@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"log"
 	"net"
@@ -150,29 +151,26 @@ func (h *Handler) Echo(request []string) (int, error) {
 	encoding := getEncoding(request)
 
 	var echo string
+	var responseBody bytes.Buffer
+	var contentLength int
 
-	// var responseBody bytes.Buffer
-	// var contentLength int
+	if strings.Contains(encoding, "gzip") {
+		gz := gzip.NewWriter(&responseBody)
+		_, err := gz.Write([]byte(body))
+		if err != nil {
+			log.Println(err)
+		}
 
-	// if strings.Contains(encoding, "gzip") {
-	// 	gz := gzip.NewWriter(&responseBody)
-	// 	_, err := gz.Write([]byte(body))
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 	}
+		err = gz.Close()
+		if err != nil {
+			log.Println(err)
+		}
 
-	// 	err = gz.Close()
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 	}
-
-	// 	contentLength = responseBody.Len()
-	// } else {
-	// 	responseBody.WriteString(body)
-	// 	contentLength = utf8.RuneCountInString(body)
-	// }
-
-	contentLength := utf8.RuneCountInString(body)
+		contentLength = responseBody.Len()
+	} else {
+		responseBody.WriteString(body)
+		contentLength = utf8.RuneCountInString(body)
+	}
 
 	if strings.Contains(encoding, "gzip") {
 		echo = fmt.Sprintf(
