@@ -167,6 +167,8 @@ func (h *Handler) Echo(request []string) (int, error) {
 	// 	contentLength = utf8.RuneCountInString(body)
 	// }
 
+	log.Println(strings.Join(request, ", "))
+
 	contentLength = utf8.RuneCountInString(body)
 
 	if strings.Contains(encoding, "gzip") {
@@ -188,8 +190,6 @@ func (h *Handler) Echo(request []string) (int, error) {
 			body,
 		)
 	}
-
-	log.Println(echo)
 
 	status, err := h.conn.Write([]byte(echo))
 	if err != nil {
