@@ -170,7 +170,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	contentLength = utf8.RuneCountInString(body)
 
 	if strings.Contains(encoding, "gzip") {
-		log.Println(encoding)
+		log.Println("encoding")
 		echo = fmt.Sprintf(
 			"%sContent-Type: text/plain\r\n%s\r\nContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
@@ -180,6 +180,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 			body,
 		)
 	} else {
+		log.Println("else")
 		echo = fmt.Sprintf(
 			"%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
