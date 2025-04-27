@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bytes"
-	"compress/gzip"
 	"fmt"
 	"log"
 	"net"
@@ -147,25 +146,25 @@ func (h *Handler) Echo(request []string) (int, error) {
 	encoding := getEncoding(request)
 
 	var responseBody bytes.Buffer
-	var contentLength int
+	var contentLength int = utf8.RuneCountInString(body)
 
-	if strings.Contains(encoding, "gzip") {
-		gz := gzip.NewWriter(&responseBody)
-		_, err := gz.Write([]byte(body))
-		if err != nil {
-			log.Println(err)
-		}
+	// if strings.Contains(encoding, "gzip") {
+	// 	gz := gzip.NewWriter(&responseBody)
+	// 	_, err := gz.Write([]byte(body))
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 	}
 
-		err = gz.Close()
-		if err != nil {
-			log.Println(err)
-		}
+	// 	err = gz.Close()
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 	}
 
-		contentLength = responseBody.Len()
-	} else {
-		responseBody.WriteString(body)
-		contentLength = utf8.RuneCountInString(body)
-	}
+	// 	contentLength = responseBody.Len()
+	// } else {
+	// 	responseBody.WriteString(body)
+	// 	contentLength = utf8.RuneCountInString(body)
+	// }
 
 	var echo string
 
@@ -174,8 +173,8 @@ func (h *Handler) Echo(request []string) (int, error) {
 		echo = fmt.Sprintf(
 			"%s%s\r\nContent-Type: text/plain\r\n\r\nContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
-			"Content-Encoding: gzip",
-			// encoding,
+			// "Content-Encoding: gzip",
+			encoding,
 			contentLength,
 			responseBody.String(),
 		)
