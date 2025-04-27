@@ -62,7 +62,7 @@ func getEncoding(request []string) string {
 
 	if slices.Contains(supportedEncoding, encoding) {
 		return fmt.Sprintf(
-			"\nContent-Encoding: %s\r\n\n",
+			"Content-Encoding: %s\r\n\n",
 			encoding,
 		)
 	}
