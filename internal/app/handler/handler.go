@@ -58,13 +58,15 @@ func NewHandler(serveDir string) {
 }
 
 func getEncoding(request []string) string {
-	encoding := strings.ReplaceAll(request[4], "Accept-Encoding: ", "")
+	// encoding := strings.ReplaceAll(request[4], "Accept-Encoding: ", "")
 
-	if slices.Contains(supportedEncoding, encoding) {
-		return fmt.Sprintf(
-			"Content-Encoding: %s",
-			encoding,
-		)
+	for i := 0; i < len(request); i++ {
+		if slices.Contains(supportedEncoding, request[i]) {
+			return fmt.Sprintf(
+				"Content-Encoding: %s",
+				encoding,
+			)
+		}
 	}
 
 	return ""
