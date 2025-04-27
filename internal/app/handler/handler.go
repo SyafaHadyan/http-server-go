@@ -78,22 +78,29 @@ func NewHandler(serveDir string) {
 func handle(handler *Handler) {
 	remote := handler.conn.RemoteAddr()
 
+	var buf bytes.Buffer
+
+	bytes := make([]byte, 1024)
 	for {
-		bytes := make([]byte, 1024)
-		_, err := handler.conn.Read(bytes)
+		n, err := handler.conn.Read(bytes)
 		if err != nil {
-			log.Println(remote)
-		}
-
-		request := strings.Split(string(bytes), "\r\n")
-
-		if len(request) == 1 {
+			log.Println(err)
 			break
 		}
-
-		log.Println(strings.Join(request, ", "))
-		handler.HandleRequest(request)
+		buf.Write(bytes[:n])
 	}
+
+	_, err := handler.conn.Read(bytes)
+	if err != nil {
+		log.Println(remote)
+	}
+
+	requestSlice := buf.Bytes()
+	request := strings.Split(string(requestSlice), "\r\n")
+
+	log.Println(strings.Join(request, ", "))
+
+	handler.HandleRequest(request)
 }
 
 func (h *Handler) ReadRequest() {
