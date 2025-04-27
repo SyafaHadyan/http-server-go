@@ -174,8 +174,8 @@ func (h *Handler) Echo(request []string) (int, error) {
 		echo = fmt.Sprintf(
 			"%sContent-Type: text/plain\r\n%s\r\nContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
-			// "Content-Encoding: gzip",
-			encoding,
+			"Content-Encoding: gzip",
+			// encoding,
 			contentLength,
 			body,
 		)
