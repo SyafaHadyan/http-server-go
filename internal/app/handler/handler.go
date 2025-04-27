@@ -178,7 +178,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 			httpStatus["ok"],
 			encoding,
 			contentLength,
-			body,
+			&responseBody,
 		)
 	} else {
 		echo = fmt.Sprintf(
@@ -186,7 +186,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 			httpStatus["ok"],
 			encoding,
 			contentLength,
-			body,
+			&responseBody,
 		)
 	}
 
