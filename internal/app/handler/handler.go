@@ -78,30 +78,20 @@ func NewHandler(serveDir string) {
 func handle(handler *Handler) {
 	remote := handler.conn.RemoteAddr()
 
-	var requestSlice [32]string
+	// var requestSlice [32]string
 
-	for {
-		index := 0
-
-		bytes := make([]byte, 1024)
-		_, err := handler.conn.Read(bytes)
-		if err != nil {
-			log.Println(err)
-			break
-		}
-
-		requestSlice[index] = string(bytes)
-
-		index = index + 1
+	bytes := make([]byte, 1024)
+	_, err := handler.conn.Read(bytes)
+	if err != nil {
+		log.Println(err)
+		log.Println(remote)
 	}
 
-	for i := range requestSlice {
-		request := strings.Split(string(requestSlice[i]), "\r\n")
+	request := strings.Split(string(bytes), "\r\n")
 
-		log.Println(strings.Join(request, ", "))
+	log.Println(strings.Join(request, ", "))
 
-		handler.HandleRequest(request)
-	}
+	handler.HandleRequest(request)
 }
 
 func (h *Handler) ReadRequest() {
@@ -156,7 +146,7 @@ func (h *Handler) Root(request []string) (int, error) {
 		return status, err
 	}
 
-	err = h.conn.Close()
+	// err = h.conn.Close()
 	if err != nil {
 		log.Println(err)
 	}
@@ -215,7 +205,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 		return status, err
 	}
 
-	err = h.conn.Close()
+	// err = h.conn.Close()
 	if err != nil {
 		log.Println(err)
 	}
@@ -247,7 +237,7 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 		return status, err
 	}
 
-	err = h.conn.Close()
+	// err = h.conn.Close()
 	if err != nil {
 		log.Println(err)
 	}
@@ -286,7 +276,7 @@ func (h *Handler) Files(request []string) (int, error) {
 		return status, err
 	}
 
-	err = h.conn.Close()
+	// err = h.conn.Close()
 	if err != nil {
 		log.Println(err)
 	}
@@ -335,7 +325,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	err = h.conn.Close()
+	// err = h.conn.Close()
 	if err != nil {
 		log.Println(err)
 	}
