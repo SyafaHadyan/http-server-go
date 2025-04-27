@@ -168,7 +168,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	}
 
 	echo := fmt.Sprintf(
-		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+		"%sContent-Type: text/plain\r\n%sContent-Length: %d\r\n\r\n%s",
 		httpStatus["ok"],
 		encoding,
 		contentLength,
