@@ -158,10 +158,10 @@ func (h *Handler) Echo(request []string) (int, error) {
 		return status, err
 	}
 
-	err = h.conn.Close()
-	if err != nil {
-		log.Println(err)
-	}
+	// err = h.conn.Close()
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 
 	return status, err
 }
