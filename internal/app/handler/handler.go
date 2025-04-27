@@ -147,6 +147,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	encoding := getEncoding(request)
 
 	var responseBody bytes.Buffer
+	var contentLength int
 
 	if strings.Contains(encoding, "gzip") {
 		gz := gzip.NewWriter(&responseBody)
@@ -159,15 +160,18 @@ func (h *Handler) Echo(request []string) (int, error) {
 		if err != nil {
 			log.Println(err)
 		}
+
+		contentLength = responseBody.Len()
 	} else {
 		responseBody.WriteString(body)
+		contentLength = utf8.RuneCountInString(body)
 	}
 
 	echo := fmt.Sprintf(
 		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
 		httpStatus["ok"],
 		encoding,
-		utf8.RuneCountInString(body),
+		contentLength,
 		responseBody.String(),
 	)
 
