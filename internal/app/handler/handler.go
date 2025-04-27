@@ -145,8 +145,9 @@ func (h *Handler) Echo(request []string) (int, error) {
 
 	encoding := getEncoding(request)
 
+	var echo string
 	var responseBody bytes.Buffer
-	var contentLength int = utf8.RuneCountInString(body)
+	var contentLength int
 
 	// if strings.Contains(encoding, "gzip") {
 	// 	gz := gzip.NewWriter(&responseBody)
@@ -166,7 +167,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	// 	contentLength = utf8.RuneCountInString(body)
 	// }
 
-	var echo string
+	contentLength = utf8.RuneCountInString(body)
 
 	if strings.Contains(encoding, "gzip") {
 		log.Println(encoding)
