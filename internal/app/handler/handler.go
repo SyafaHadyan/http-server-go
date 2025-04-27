@@ -58,14 +58,14 @@ func NewHandler(serveDir string) {
 }
 
 func getEncoding(request []string) string {
-	// encoding := strings.ReplaceAll(request[4], "Accept-Encoding: ", "")
+	for i := range request {
+		current := request[i]
 
-	for i := 0; i < len(request); i++ {
-		if slices.Contains(supportedEncoding, request[i]) {
-			return fmt.Sprintf(
-				"Content-Encoding: %s",
-				encoding,
-			)
+		if strings.HasPrefix(current, "Accept-Encoding: ") {
+			current := strings.ReplaceAll(current, "Accept-Encoding: ", "")
+			if slices.Contains(supportedEncoding, current) {
+				return "Content-Encoding: gzip"
+			}
 		}
 	}
 
@@ -169,25 +169,22 @@ func (h *Handler) Echo(request []string) (int, error) {
 	// 	contentLength = utf8.RuneCountInString(body)
 	// }
 
-	log.Println(strings.Join(request, ", "))
-
 	contentLength = utf8.RuneCountInString(body)
 
 	if strings.Contains(encoding, "gzip") {
-		log.Println("encoding")
 		echo = fmt.Sprintf(
 			"%sContent-Type: text/plain\r\n%s\r\nContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
-			"Content-Encoding: gzip",
-			// encoding,
+			encoding,
 			contentLength,
 			body,
 		)
 	} else {
 		log.Println("else")
 		echo = fmt.Sprintf(
-			"%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+			"%sContent-Type: text/plain\r\n%sContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
+			encoding,
 			contentLength,
 			body,
 		)
