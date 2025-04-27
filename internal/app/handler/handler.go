@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode/utf8"
 )
@@ -59,8 +60,7 @@ func NewHandler(serveDir string) {
 func getEncoding(request []string) string {
 	encoding := strings.ReplaceAll(request[4], "Accept-Encoding: ", "")
 
-	// if slices.Contains(supportedEncoding, encoding) {
-	if encoding == "gzip" {
+	if slices.Contains(supportedEncoding, encoding) {
 		return fmt.Sprintf(
 			"Content-Encoding: %s\r\n",
 			encoding,
