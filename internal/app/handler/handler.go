@@ -320,8 +320,9 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	connection, close := h.HandleCloseConnection(request)
 
 	if close {
+		log.Println("CLOSE")
 		userAgent = fmt.Sprintf(
-			"%sContent-Type: text/plain%sContent-Length: %d\r\n%s%s",
+			"%sContent-Type: text/plain%sContent-Length: %d\r\n%s\r\n%s",
 			httpStatus["ok"],
 			encoding,
 			utf8.RuneCountInString(body),
@@ -329,6 +330,7 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 			body,
 		)
 	} else {
+		log.Println("NOT")
 		userAgent = fmt.Sprintf(
 			"%sContent-Type: text/plain%sContent-Length: %d\r\n\r\n%s",
 			httpStatus["ok"],
