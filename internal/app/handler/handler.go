@@ -312,17 +312,30 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 		}
 	}
 
+	var userAgent string
+
 	encoding := getEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
-	userAgent := fmt.Sprintf(
-		"%sContent-Type: text/plain%sContent-Length: %d\r\n%s\r\n%s",
-		httpStatus["ok"],
-		encoding,
-		utf8.RuneCountInString(body),
-		connection,
-		body,
-	)
+	if close {
+		userAgent = fmt.Sprintf(
+			"%sContent-Type: text/plain%sContent-Length: %d\r\n%s%s",
+			httpStatus["ok"],
+			encoding,
+			utf8.RuneCountInString(body),
+			connection,
+			body,
+		)
+	} else {
+		userAgent = fmt.Sprintf(
+			"%sContent-Type: text/plain%sContent-Length: %d\r\n%s\r\n%s",
+			httpStatus["ok"],
+			encoding,
+			utf8.RuneCountInString(body),
+			connection,
+			body,
+		)
+	}
 
 	status, err := h.conn.Write([]byte(userAgent))
 	if err != nil {
