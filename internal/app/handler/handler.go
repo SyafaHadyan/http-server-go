@@ -253,9 +253,8 @@ func (h *Handler) Echo(request []string) (int, error) {
 
 	if strings.Contains(encoding, "gzip") {
 		echo = fmt.Sprintf(
-			"%sContent-Type: text/plain%sContent-Length: %d\r\n%s%s",
+			"%sContent-Type: text/plainContent-Length: %d\r\n%s%s",
 			httpStatus["ok"],
-			encoding,
 			contentLength,
 			connection,
 			&responseBody,
@@ -298,7 +297,7 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	connection, close := h.HandleCloseConnection(request)
 
 	userAgent := fmt.Sprintf(
-		"%sContent-Type: text/plain%sContent-Length: %d\r\n%s\r\n%s",
+		"%sContent-Type: text/plain%sContent-Length: %d\r\n%s%s",
 		httpStatus["ok"],
 		encoding,
 		utf8.RuneCountInString(body),
