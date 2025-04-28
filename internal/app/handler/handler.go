@@ -51,7 +51,7 @@ func getEncoding(request []string) string {
 		}
 	}
 
-	return ""
+	return "\r\n"
 }
 
 func (h *Handler) HandleCloseConnection(request []string) (string, bool) {
