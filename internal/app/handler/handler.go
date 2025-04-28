@@ -299,7 +299,7 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	connection, close := h.HandleCloseConnection(request)
 
 	userAgent := fmt.Sprintf(
-		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n%s%s",
+		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n%s\r\n%s",
 		httpStatus["ok"],
 		encoding,
 		utf8.RuneCountInString(body),
