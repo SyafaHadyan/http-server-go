@@ -45,13 +45,23 @@ func getEncoding(request []string) string {
 			current := strings.Split(strings.ReplaceAll(current, "Accept-Encoding: ", ""), ", ")
 			for j := range current {
 				if slices.Contains(supportedEncoding, current[j]) {
-					return "Content-Encoding: " + current[j]
+					return "Content-Encoding: " + current[j] + "\r\n"
 				}
 			}
 		}
 	}
 
 	return ""
+}
+
+func (h *Handler) HandleCloseConnection(request []string) (string, bool) {
+	for i := range request {
+		if strings.Contains(request[i], "Connection: close") {
+			return "Connection: close\r\n", true
+		}
+	}
+
+	return "\r\n", false
 }
 
 func NewHandler(serveDir string) {
@@ -146,16 +156,6 @@ func (h *Handler) readRequest() string {
 	}
 
 	return request.String()
-}
-
-func (h *Handler) HandleCloseConnection(request []string) (string, bool) {
-	for i := range request {
-		if strings.Contains(request[i], "Connection: close") {
-			return "Connection: close\r\n", true
-		}
-	}
-
-	return "\r\n", false
 }
 
 func (h *Handler) HandleRequest(request []string) {
