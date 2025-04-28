@@ -269,7 +269,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 		)
 	} else {
 		echo = fmt.Sprintf(
-			"%sContent-Type: text/plain\r\nContent-Length: %d\r\n%s%s",
+			"%sContent-Type: text/plain\r\nContent-Length: %d\r\n%s\r\n%s",
 			httpStatus["ok"],
 			contentLength,
 			connection,
