@@ -162,7 +162,10 @@ func (h *Handler) readRequest() string {
 
 func (h *Handler) HandleRequest(request []string) {
 	h = &Handler{
-		request: request,
+		listener: h.listener,
+		conn:     h.conn,
+		serveDir: h.serveDir,
+		request:  request,
 	}
 
 	path := strings.Split(request[0], " ")[1]
