@@ -393,7 +393,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	status, err := h.conn.Write([]byte(httpStatus["created"] + encoding + connection + "\r\n"))
+	status, err := h.conn.Write([]byte(httpStatus["created"] + "Content-Length: 0" + encoding + connection + "\r\n"))
 	if err != nil {
 		return status, err
 	}
