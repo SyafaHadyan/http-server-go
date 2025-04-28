@@ -272,7 +272,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 		)
 	} else if close {
 		echo = fmt.Sprintf(
-			"%sContent-Type: text/plain\r\nContent-Length: %d\r\n%s%s\r\n",
+			"%sContent-Type: text/plain\r\nContent-Length: %d\r\n%s\r\n%s",
 			httpStatus["ok"],
 			contentLength,
 			connection,
@@ -292,6 +292,8 @@ func (h *Handler) Echo(request []string) (int, error) {
 	if err != nil {
 		return status, err
 	}
+
+	time.Sleep(5000)
 
 	if close {
 		err = h.conn.Close()
