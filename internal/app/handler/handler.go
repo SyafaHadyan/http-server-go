@@ -79,58 +79,6 @@ func NewHandler(serveDir string) {
 }
 
 func handle(h *Handler) {
-	// reader := bufio.NewReader(h.conn)
-
-	// req, err := http.ReadRequest(reader)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-
-	// body, err := io.ReadAll(req.Body)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-
-	// h = &Handler{
-	// 	req: req,
-	// }
-
-	// log.Println(req)
-
-	// bytes := make([]byte, 0, 8192)
-	// temp := make([]byte, 1024)
-	// for {
-	// 	n, err := h.conn.Read(temp)
-	// 	if err == io.EOF {
-	// 		break
-	// 	}
-
-	// 	bytes = append(bytes, temp[:n]...)
-	// }
-
-	// var bytes bytes.Buffer
-	// io.Copy(&bytes, h.conn)
-
-	// log.Println(bytes.String())
-
-	// bytes := make([]byte, 8192)
-	// request := make([]string, 8)
-
-	// for {
-	//	index := 0
-
-	//	_, err := h.conn.Read(bytes)
-	//	if err != nil {
-	//		break
-	//	}
-
-	//	request[index] = string(bytes)
-	//	index++
-	//}
-
-	// reader := bufio.NewReader(h.conn)
-	// var requestBuild strings.Builder
-
 	for {
 		request := h.readRequest()
 		if request == "" {
@@ -334,11 +282,6 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 		return status, err
 	}
 
-	// err = h.conn.Close()
-	if err != nil {
-		log.Println(err)
-	}
-
 	return status, err
 }
 
@@ -371,11 +314,6 @@ func (h *Handler) Files(request []string) (int, error) {
 	status, err := h.conn.Write([]byte(files))
 	if err != nil {
 		return status, err
-	}
-
-	// err = h.conn.Close()
-	if err != nil {
-		log.Println(err)
 	}
 
 	return status, err
@@ -423,7 +361,10 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	h.conn.Close()
+	err = h.conn.Close()
+	if err != nil {
+		log.Println(err)
+	}
 
 	return status, err
 }
