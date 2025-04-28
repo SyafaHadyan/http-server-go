@@ -376,11 +376,11 @@ func (h *Handler) Files(request []string) (int, error) {
 	}
 
 	files := fmt.Sprintf(
-		"%sContent-Type: application/octet-stream%s\r\nContent-Length: %d\r\n%s%s",
+		"%sContent-Type: application/octet-stream\r\nContent-Length: %d\r\n%s%s%s",
 		httpStatus["ok"],
-		encoding,
 		len(fileContent),
 		connection,
+		encoding,
 		string(fileContent[:]),
 	)
 
