@@ -360,6 +360,8 @@ func (h *Handler) Files(request []string) (int, error) {
 	body := strings.Split(request[0], " ")[1]
 	body = strings.ReplaceAll(body, "/files/", "")
 
+	var files string
+
 	encoding := getEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
@@ -375,14 +377,24 @@ func (h *Handler) Files(request []string) (int, error) {
 		return status, err
 	}
 
-	files := fmt.Sprintf(
-		"%sContent-Type: application/octet-stream\r\nContent-Length: %d\r\n%s%s%s",
-		httpStatus["ok"],
-		len(fileContent),
-		connection,
-		encoding,
-		string(fileContent[:]),
-	)
+	if close {
+		files = fmt.Sprintf(
+			"%sContent-Type: application/octet-stream\r\nContent-Length: %d\r\n%s%s%s",
+			httpStatus["ok"],
+			len(fileContent),
+			connection,
+			encoding,
+			string(fileContent[:]),
+		)
+	} else {
+		files = fmt.Sprintf(
+			"%sContent-Type: application/octet-stream\r\nContent-Length: %d\r\n%s%s",
+			httpStatus["ok"],
+			len(fileContent),
+			connection,
+			string(fileContent[:]),
+		)
+	}
 
 	status, err := h.conn.Write([]byte(files))
 	if err != nil {
