@@ -283,7 +283,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	}
 
 	if close {
-		// err = h.conn.Close()
+		err = h.conn.Close()
 		if err != nil {
 			log.Println(err)
 		}
