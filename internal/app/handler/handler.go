@@ -207,7 +207,15 @@ func (h *Handler) Root(request []string) (int, error) {
 	encoding := getEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
-	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0" + encoding + connection))
+	var root string
+
+	if close {
+		root = httpStatus["ok"] + "Content-Length: 0" + encoding + connection + "\r\n"
+	} else {
+		root = httpStatus["ok"] + "Content-Length: 0" + encoding + connection
+	}
+
+	status, err := h.conn.Write([]byte(root))
 	if err != nil {
 		return status, err
 	}
