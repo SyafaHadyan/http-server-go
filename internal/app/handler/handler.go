@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -317,6 +318,8 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	if err != nil {
 		return status, err
 	}
+
+	time.Sleep(5000)
 
 	if close {
 		err = h.conn.Close()
