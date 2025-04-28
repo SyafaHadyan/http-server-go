@@ -207,7 +207,7 @@ func (h *Handler) Root(request []string) (int, error) {
 	encoding := getEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
-	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0\r\n" + connection + encoding + "\r\n"))
+	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0" + connection + encoding + "\r\n"))
 	if err != nil {
 		return status, err
 	}
