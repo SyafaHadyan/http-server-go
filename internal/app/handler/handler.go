@@ -13,7 +13,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -225,7 +224,13 @@ func (h *Handler) Root() (int, error) {
 		return status, err
 	}
 
-	time.Sleep(5000)
+	tcpConn, ok := h.conn.(*net.TCPConn)
+	if ok {
+		err := tcpConn.SetNoDelay(true)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 
 	if closeConn {
 		err = h.conn.Close()
@@ -298,7 +303,13 @@ func (h *Handler) Echo() (int, error) {
 		return status, err
 	}
 
-	time.Sleep(5000)
+	tcpConn, ok := h.conn.(*net.TCPConn)
+	if ok {
+		err := tcpConn.SetNoDelay(true)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 
 	if closeConn {
 		err = h.conn.Close()
@@ -346,6 +357,14 @@ func (h *Handler) UserAgent() (int, error) {
 	status, err := h.conn.Write([]byte(userAgent))
 	if err != nil {
 		return status, err
+	}
+
+	tcpConn, ok := h.conn.(*net.TCPConn)
+	if ok {
+		err := tcpConn.SetNoDelay(true)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	if closeConn {
@@ -403,6 +422,14 @@ func (h *Handler) Files() (int, error) {
 		return status, err
 	}
 
+	tcpConn, ok := h.conn.(*net.TCPConn)
+	if ok {
+		err := tcpConn.SetNoDelay(true)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
 	if closeConn {
 		err = h.conn.Close()
 		if err != nil {
@@ -454,6 +481,14 @@ func (h *Handler) NewFile() (int, error) {
 	err = file.Close()
 	if err != nil {
 		log.Println(err)
+	}
+
+	tcpConn, ok := h.conn.(*net.TCPConn)
+	if ok {
+		err := tcpConn.SetNoDelay(true)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	if closeConn {
