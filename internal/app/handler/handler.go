@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"fmt"
@@ -75,31 +76,115 @@ func NewHandler(serveDir string) {
 	}
 }
 
-func handle(handler *Handler) {
-	remote := handler.conn.RemoteAddr()
+func handle(h *Handler) {
+	// reader := bufio.NewReader(h.conn)
 
-	// var requestSlice [32]string
+	// req, err := http.ReadRequest(reader)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 
-	bytes := make([]byte, 1024)
-	_, err := handler.conn.Read(bytes)
-	if err != nil {
-		log.Println(err)
-		log.Println(remote)
+	// body, err := io.ReadAll(req.Body)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+
+	// h = &Handler{
+	// 	req: req,
+	// }
+
+	// log.Println(req)
+
+	// bytes := make([]byte, 0, 8192)
+	// temp := make([]byte, 1024)
+	// for {
+	// 	n, err := h.conn.Read(temp)
+	// 	if err == io.EOF {
+	// 		break
+	// 	}
+
+	// 	bytes = append(bytes, temp[:n]...)
+	// }
+
+	// var bytes bytes.Buffer
+	// io.Copy(&bytes, h.conn)
+
+	// log.Println(bytes.String())
+
+	// bytes := make([]byte, 8192)
+	// request := make([]string, 8)
+
+	// for {
+	//	index := 0
+
+	//	_, err := h.conn.Read(bytes)
+	//	if err != nil {
+	//		break
+	//	}
+
+	//	request[index] = string(bytes)
+	//	index++
+	//}
+
+	// reader := bufio.NewReader(h.conn)
+	// var requestBuild strings.Builder
+
+	for {
+		request := h.readRequest()
+		if request == "" {
+			break
+		}
+
+		h.handleBuilder(request)
 	}
 
-	request := strings.Split(string(bytes), "\r\n")
-
-	log.Println(strings.Join(request, ", "))
-
-	handler.HandleRequest(request)
-
-	handler.conn.Close()
+	err := h.conn.Close()
+	if err != nil {
+		log.Println(err)
+	}
 }
 
-func (h *Handler) ReadRequest() {
+func (h *Handler) handleBuilder(request string) {
+	requestLine := strings.Split(request, "\r\n")
+
+	log.Println(strings.Join(requestLine, ", "))
+
+	h.HandleRequest(requestLine)
+}
+
+func (h *Handler) readRequest() string {
+	reader := bufio.NewReader(h.conn)
+	var request strings.Builder
+
+	requestLine, err := reader.ReadString('\n')
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+	request.WriteString(requestLine)
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			log.Println(err)
+			break
+		}
+
+		if line == "\r\n" || line == "\n" {
+			request.WriteString(line)
+			break
+		}
+		request.WriteString(line)
+	}
+
+	return request.String()
 }
 
 func (h *Handler) HandleRequest(request []string) {
+	if len(request[0]) <= 1 {
+		return
+	}
+
 	path := strings.Split(request[0], " ")[1]
 
 	switch strings.Split(request[0], " ")[0] {
@@ -143,14 +228,9 @@ func (h *Handler) HandleRequest(request []string) {
 func (h *Handler) Root(request []string) (int, error) {
 	encoding := getEncoding(request)
 
-	status, err := h.conn.Write([]byte(httpStatus["ok"] + encoding + "\r\n"))
+	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0\r\n" + encoding + "\r\n"))
 	if err != nil {
 		return status, err
-	}
-
-	// err = h.conn.Close()
-	if err != nil {
-		log.Println(err)
 	}
 
 	return status, err
@@ -205,11 +285,6 @@ func (h *Handler) Echo(request []string) (int, error) {
 	status, err := h.conn.Write([]byte(echo))
 	if err != nil {
 		return status, err
-	}
-
-	// err = h.conn.Close()
-	if err != nil {
-		log.Println(err)
 	}
 
 	return status, err
