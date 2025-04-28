@@ -148,17 +148,14 @@ func (h *Handler) readRequest() string {
 	return request.String()
 }
 
-func (h *Handler) HandleCloseConnection(request []string) {
+func (h *Handler) HandleCloseConnection(request []string) string {
 	for i := range request {
 		if strings.Contains(request[i], "Connection: close") {
-			log.Println("close")
-			err := h.conn.Close()
-			if err != nil {
-				log.Println(err)
-			}
-			return
+			return "Connection: close\r\n"
 		}
 	}
+
+	return "\r\n"
 }
 
 func (h *Handler) HandleRequest(request []string) {
@@ -208,13 +205,12 @@ func (h *Handler) HandleRequest(request []string) {
 
 func (h *Handler) Root(request []string) (int, error) {
 	encoding := getEncoding(request)
+	connection := h.HandleCloseConnection(request)
 
-	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0\r\n" + encoding + "\r\n"))
+	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0\r\n" + connection + encoding + "\r\n"))
 	if err != nil {
 		return status, err
 	}
-
-	h.HandleCloseConnection(request)
 
 	return status, err
 }
@@ -224,6 +220,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	body = strings.ReplaceAll(body, "/echo/", "")
 
 	encoding := getEncoding(request)
+	connection := h.HandleCloseConnection(request)
 
 	var echo string
 	var responseBody bytes.Buffer
@@ -249,18 +246,20 @@ func (h *Handler) Echo(request []string) (int, error) {
 
 	if strings.Contains(encoding, "gzip") {
 		echo = fmt.Sprintf(
-			"%sContent-Type: text/plain\r\n%s\r\nContent-Length: %d\r\n\r\n%s",
+			"%sContent-Type: text/plain\r\n%s\r\nContent-Length: %d\r\n%s\r\n%s",
 			httpStatus["ok"],
 			encoding,
 			contentLength,
+			connection,
 			&responseBody,
 		)
 	} else {
 		echo = fmt.Sprintf(
-			"%sContent-Type: text/plain\r\n%sContent-Length: %d\r\n\r\n%s",
+			"%sContent-Type: text/plain\r\n%sContent-Length: %d\r\n%s\r\n%s",
 			httpStatus["ok"],
 			encoding,
 			contentLength,
+			connection,
 			&responseBody,
 		)
 	}
@@ -285,12 +284,14 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	}
 
 	encoding := getEncoding(request)
+	connection := h.HandleCloseConnection(request)
 
 	userAgent := fmt.Sprintf(
-		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n%s%s",
 		httpStatus["ok"],
 		encoding,
 		utf8.RuneCountInString(body),
+		connection,
 		body,
 	)
 
@@ -309,6 +310,7 @@ func (h *Handler) Files(request []string) (int, error) {
 	body = strings.ReplaceAll(body, "/files/", "")
 
 	encoding := getEncoding(request)
+	connection := h.HandleCloseConnection(request)
 
 	fileContent, err := os.ReadFile(h.serveDir + body)
 	if err != nil {
@@ -323,10 +325,11 @@ func (h *Handler) Files(request []string) (int, error) {
 	}
 
 	files := fmt.Sprintf(
-		"%s%sContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s",
+		"%s%sContent-Type: application/octet-stream\r\nContent-Length: %d\r\n%s%s",
 		httpStatus["ok"],
 		encoding,
 		len(fileContent),
+		connection,
 		string(fileContent[:]),
 	)
 
