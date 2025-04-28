@@ -148,14 +148,14 @@ func (h *Handler) readRequest() string {
 	return request.String()
 }
 
-func (h *Handler) HandleCloseConnection(request []string) string {
+func (h *Handler) HandleCloseConnection(request []string) (string, bool) {
 	for i := range request {
 		if strings.Contains(request[i], "Connection: close") {
-			return "Connection: close\r\n"
+			return "Connection: close\r\n", true
 		}
 	}
 
-	return "\r\n"
+	return "\r\n", false
 }
 
 func (h *Handler) HandleRequest(request []string) {
@@ -205,11 +205,18 @@ func (h *Handler) HandleRequest(request []string) {
 
 func (h *Handler) Root(request []string) (int, error) {
 	encoding := getEncoding(request)
-	connection := h.HandleCloseConnection(request)
+	connection, close := h.HandleCloseConnection(request)
 
 	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0\r\n" + connection + encoding + "\r\n"))
 	if err != nil {
 		return status, err
+	}
+
+	if close {
+		err = h.conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	return status, err
@@ -220,7 +227,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	body = strings.ReplaceAll(body, "/echo/", "")
 
 	encoding := getEncoding(request)
-	connection := h.HandleCloseConnection(request)
+	connection, close := h.HandleCloseConnection(request)
 
 	var echo string
 	var responseBody bytes.Buffer
@@ -269,7 +276,12 @@ func (h *Handler) Echo(request []string) (int, error) {
 		return status, err
 	}
 
-	h.HandleCloseConnection(request)
+	if close {
+		err = h.conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 
 	return status, err
 }
@@ -284,7 +296,7 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	}
 
 	encoding := getEncoding(request)
-	connection := h.HandleCloseConnection(request)
+	connection, close := h.HandleCloseConnection(request)
 
 	userAgent := fmt.Sprintf(
 		"%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n%s%s",
@@ -300,7 +312,12 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 		return status, err
 	}
 
-	h.HandleCloseConnection(request)
+	if close {
+		err = h.conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 
 	return status, err
 }
@@ -310,7 +327,7 @@ func (h *Handler) Files(request []string) (int, error) {
 	body = strings.ReplaceAll(body, "/files/", "")
 
 	encoding := getEncoding(request)
-	connection := h.HandleCloseConnection(request)
+	connection, close := h.HandleCloseConnection(request)
 
 	fileContent, err := os.ReadFile(h.serveDir + body)
 	if err != nil {
@@ -338,7 +355,12 @@ func (h *Handler) Files(request []string) (int, error) {
 		return status, err
 	}
 
-	h.HandleCloseConnection(request)
+	if close {
+		err = h.conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 
 	return status, err
 }
@@ -357,6 +379,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 	}
 
 	encoding := getEncoding(request)
+	connection, close := h.HandleCloseConnection(request)
 
 	file, err := os.Create(h.serveDir + fileName)
 	if err != nil {
@@ -370,7 +393,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	status, err := h.conn.Write([]byte(httpStatus["created"] + encoding + "\r\n"))
+	status, err := h.conn.Write([]byte(httpStatus["created"] + encoding + connection + "\r\n"))
 	if err != nil {
 		return status, err
 	}
@@ -385,9 +408,11 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	err = h.conn.Close()
-	if err != nil {
-		log.Println(err)
+	if close {
+		err = h.conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	return status, err
