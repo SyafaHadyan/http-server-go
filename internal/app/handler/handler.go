@@ -207,7 +207,7 @@ func (h *Handler) Root(request []string) (int, error) {
 	encoding := getEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
-	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0" + encoding + connection + "\r\n"))
+	status, err := h.conn.Write([]byte(httpStatus["ok"] + "Content-Length: 0" + encoding + connection))
 	if err != nil {
 		return status, err
 	}
@@ -298,7 +298,7 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	connection, close := h.HandleCloseConnection(request)
 
 	userAgent := fmt.Sprintf(
-		"%sContent-Type: text/plain%sContent-Length: %d\r\n%s\r\n%s",
+		"%sContent-Type: text/plain%sContent-Length: %d\r\n%s%s",
 		httpStatus["ok"],
 		encoding,
 		utf8.RuneCountInString(body),
