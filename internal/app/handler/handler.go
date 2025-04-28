@@ -328,11 +328,10 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 		)
 	} else {
 		userAgent = fmt.Sprintf(
-			"%sContent-Type: text/plain%sContent-Length: %d\r\n%s\r\n%s",
+			"%sContent-Type: text/plain%sContent-Length: %d\r\n%s",
 			httpStatus["ok"],
 			encoding,
 			utf8.RuneCountInString(body),
-			connection,
 			body,
 		)
 	}
