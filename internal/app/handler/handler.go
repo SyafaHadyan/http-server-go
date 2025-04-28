@@ -5,11 +5,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -163,6 +165,7 @@ func (h *Handler) readRequest() string {
 	}
 	request.WriteString(requestLine)
 
+	var contentLength int
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
@@ -170,11 +173,28 @@ func (h *Handler) readRequest() string {
 			break
 		}
 
+		if strings.HasPrefix(line, "Content-Length: ") {
+			contentLength, err = strconv.Atoi(strings.TrimSpace(strings.Split(line, ":")[1]))
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
 		if line == "\r\n" || line == "\n" {
 			request.WriteString(line)
 			break
 		}
 		request.WriteString(line)
+	}
+
+	if contentLength > 0 {
+		body := make([]byte, contentLength)
+		_, err := io.ReadFull(reader, body)
+		if err != nil {
+			log.Println(err)
+		}
+
+		request.Write(body)
 	}
 
 	return request.String()
@@ -362,6 +382,7 @@ func (h *Handler) Files(request []string) (int, error) {
 }
 
 func (h *Handler) NewFile(request []string) (int, error) {
+	log.Println("newfile")
 	path := strings.Split(request[0], " ")[1]
 	fileName := strings.TrimPrefix(path, "/files/")
 
@@ -402,10 +423,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		log.Println(err)
 	}
 
-	// err = h.conn.Close()
-	if err != nil {
-		log.Println(err)
-	}
+	h.conn.Close()
 
 	return status, err
 }
