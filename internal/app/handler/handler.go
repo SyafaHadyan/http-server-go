@@ -229,6 +229,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	encoding := getEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
+	var echo string
 	var responseBody bytes.Buffer
 	var contentLength int
 
@@ -250,14 +251,24 @@ func (h *Handler) Echo(request []string) (int, error) {
 		contentLength = utf8.RuneCountInString(body)
 	}
 
-	echo := fmt.Sprintf(
-		"%sContent-Type: text/plain%sContent-Length: %d%s\r\n%s",
-		httpStatus["ok"],
-		encoding,
-		contentLength,
-		connection,
-		&responseBody,
-	)
+	if strings.Contains(encoding, "gzip") {
+		echo = fmt.Sprintf(
+			"%sContent-Type: text/plain%sContent-Length: %d%s\r\n%s",
+			httpStatus["ok"],
+			encoding,
+			contentLength,
+			connection,
+			&responseBody,
+		)
+	} else {
+		echo = fmt.Sprintf(
+			"%sContent-Type: text/plain\r\nContent-Length: %d%s\r\n%s",
+			httpStatus["ok"],
+			contentLength,
+			connection,
+			&responseBody,
+		)
+	}
 
 	status, err := h.conn.Write([]byte(echo))
 	if err != nil {
