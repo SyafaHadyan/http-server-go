@@ -38,7 +38,7 @@ func init() {
 	httpStatus["created"] = "HTTP/1.1 201 Created\r\n"
 }
 
-func getEncoding(request []string) string {
+func (h *Handler) GetEncoding(request []string) string {
 	for i := range request {
 		current := request[i]
 
@@ -205,7 +205,7 @@ func (h *Handler) HandleRequest(request []string) {
 }
 
 func (h *Handler) Root(request []string) (int, error) {
-	encoding := getEncoding(request)
+	encoding := h.GetEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
 	var root string
@@ -237,7 +237,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	body := strings.Split(request[0], " ")[1]
 	body = strings.ReplaceAll(body, "/echo/", "")
 
-	encoding := getEncoding(request)
+	encoding := h.GetEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
 	var echo string
@@ -317,7 +317,7 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 
 	var userAgent string
 
-	encoding := getEncoding(request)
+	encoding := h.GetEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
 	if close {
@@ -362,7 +362,7 @@ func (h *Handler) Files(request []string) (int, error) {
 
 	var files string
 
-	encoding := getEncoding(request)
+	encoding := h.GetEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
 	fileContent, err := os.ReadFile(h.serveDir + body)
@@ -424,7 +424,7 @@ func (h *Handler) NewFile(request []string) (int, error) {
 		}
 	}
 
-	encoding := getEncoding(request)
+	encoding := h.GetEncoding(request)
 	connection, close := h.HandleCloseConnection(request)
 
 	file, err := os.Create(h.serveDir + fileName)
