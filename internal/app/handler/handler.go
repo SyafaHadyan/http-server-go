@@ -148,6 +148,19 @@ func (h *Handler) readRequest() string {
 	return request.String()
 }
 
+func (h *Handler) HandleCloseConnection(request []string) {
+	for i := range request {
+		if strings.Contains(request[i], "Connection: close") {
+			log.Println("close")
+			err := h.conn.Close()
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+	}
+}
+
 func (h *Handler) HandleRequest(request []string) {
 	if len(request[0]) <= 1 {
 		return
@@ -200,6 +213,8 @@ func (h *Handler) Root(request []string) (int, error) {
 	if err != nil {
 		return status, err
 	}
+
+	h.HandleCloseConnection(request)
 
 	return status, err
 }
@@ -255,6 +270,8 @@ func (h *Handler) Echo(request []string) (int, error) {
 		return status, err
 	}
 
+	h.HandleCloseConnection(request)
+
 	return status, err
 }
 
@@ -281,6 +298,8 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	if err != nil {
 		return status, err
 	}
+
+	h.HandleCloseConnection(request)
 
 	return status, err
 }
@@ -315,6 +334,8 @@ func (h *Handler) Files(request []string) (int, error) {
 	if err != nil {
 		return status, err
 	}
+
+	h.HandleCloseConnection(request)
 
 	return status, err
 }
