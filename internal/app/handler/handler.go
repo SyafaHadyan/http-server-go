@@ -275,7 +275,7 @@ func (h *Handler) Echo(request []string) (int, error) {
 	}
 
 	if close {
-		err = h.conn.Close()
+		// err = h.conn.Close()
 		if err != nil {
 			log.Println(err)
 		}
@@ -297,7 +297,7 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 	connection, close := h.HandleCloseConnection(request)
 
 	userAgent := fmt.Sprintf(
-		"%sContent-Type: text/plain%sContent-Length: %d\r\n%s%s\r\n",
+		"%sContent-Type: text/plain%sContent-Length: %d\r\n%s%s",
 		httpStatus["ok"],
 		encoding,
 		utf8.RuneCountInString(body),
