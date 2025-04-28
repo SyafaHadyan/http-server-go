@@ -343,8 +343,6 @@ func (h *Handler) UserAgent(request []string) (int, error) {
 		return status, err
 	}
 
-	time.Sleep(5000)
-
 	if close {
 		err = h.conn.Close()
 		if err != nil {
